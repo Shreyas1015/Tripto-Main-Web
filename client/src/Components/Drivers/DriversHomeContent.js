@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../API/axiosInstance";
+import secureLocalStorage from "react-secure-storage";
 
 const DriversHomeContent = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const uid = new URLSearchParams(location.search).get("uid");
+  const uid = localStorage.getItem("@secure.n.uid");
+  const decryptedUID = secureLocalStorage.getItem("uid");
 
   const [bookingsData, setBookingsData] = useState([]);
 
@@ -14,7 +15,7 @@ const DriversHomeContent = () => {
       try {
         const res = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchBookingsDetails`,
-          { uid }
+          { decryptedUID }
         );
         if (res.status === 200) {
           setBookingsData(res.data);
@@ -28,7 +29,7 @@ const DriversHomeContent = () => {
     };
 
     fetchBookingsDetails();
-  }, [uid]);
+  }, [decryptedUID]);
 
   const BackToLogin = () => {
     navigate("/");
@@ -52,19 +53,60 @@ const DriversHomeContent = () => {
       <div className="container-fluid">
         <h2>Drivers Home Page</h2>
         <hr />
-        <div className="bookings">
+        <div className="bookings row">
           {bookingsData.map((booking) => (
-            <div key={booking.bid} className="card" style={{ width: "18rem" }}>
-              <img src="" className="card-img-top" alt="Booking" />
-              <div className="card-body">
-                <h5 className="card-title">{booking.trip_type}</h5>
-                <p className="card-text">
-                  Pickup: {booking.pickup_location}
-                  <br />
-                  Drop: {booking.drop_location}
-                  <br />
-                  Date & Time: {booking.pickup_date_time}
-                </p>
+            <div className="col-lg-4" key={booking.bid}>
+              <div className="card my-3 mx-auto" style={{ width: "20rem" }}>
+                <img
+                  src="/Images/2-Cars.png"
+                  className="card-img-top"
+                  alt="Booking"
+                />
+                <div className="card-body">
+                  <h5 className="card-title">
+                    {booking.trip_type === 1 ? "One Way Trip" : "Round Trip"}
+                  </h5>
+                  <p
+                    style={{
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {" "}
+                    Pickup: {booking.pickup_location}
+                  </p>
+                  <p
+                    style={{
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {" "}
+                    Drop: {booking.drop_location}
+                  </p>
+
+                  <p className="card-text text-secondary">
+                    Date & Time :{" "}
+                    {new Date(booking.pickup_date_time).toLocaleString(
+                      "en-GB",
+                      {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      }
+                    )}
+                  </p>
+                  <div className="col-lg-6">
+                    <Link to={`/booking-details?bid=${booking.bid}`}>
+                      <button className="btn blue-buttons">View Details</button>
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

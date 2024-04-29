@@ -2,13 +2,16 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IKContext, IKUpload } from "imagekitio-react";
 import axiosInstance from "../../API/axiosInstance";
+import secureLocalStorage from "react-secure-storage";
 
 const PassengerProfileContent = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const uid = new URLSearchParams(location.search).get("uid");
+  const uid = localStorage.getItem("@secure.n.uid");
+  const decryptedUID = secureLocalStorage.getItem("uid");
+  const decryptedUT = secureLocalStorage.getItem("user_type");
 
-  const userType = localStorage.getItem("user_type");
+  const userType = localStorage.getItem("@secure.n.user_type");
+
   console.log("User Id : ", uid);
   console.log("UserType :", userType);
 
@@ -17,16 +20,16 @@ const PassengerProfileContent = () => {
   const [updatedProfileIMG, setUpdatedProfileIMG] = useState("");
 
   const [profileData, setProfileData] = useState({
-    uid: uid,
-    user_type: userType,
+    uid: decryptedUID,
+    user_type: decryptedUT,
     name: "",
     email: "",
     emailOtp: "",
     phone_number: "",
   });
   const [updatedProfileData, setUpdatedProfileData] = useState({
-    uid: uid,
-    user_type: userType,
+    uid: decryptedUID,
+    user_type: decryptedUT,
     name: "",
     email: "",
     emailOtp: "",
@@ -38,7 +41,7 @@ const PassengerProfileContent = () => {
     try {
       const res = await axiosInstance.post(
         `${process.env.REACT_APP_BASE_URL}/passengers/sendProfileUpdateEmailVerification`,
-        { uid }
+        { decryptedUID }
       );
 
       setPreviousEmail(res.data.email);
@@ -107,10 +110,7 @@ const PassengerProfileContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/passengers/fetchProfileData`,
-          { uid },
-          {
-            withCredentials: true,
-          }
+          { decryptedUID }
         );
 
         if (response.status === 200) {
@@ -127,10 +127,7 @@ const PassengerProfileContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/passengers/fetchProfileIMG`,
-          { uid },
-          {
-            withCredentials: true,
-          }
+          { decryptedUID }
         );
 
         setUpdatedProfileIMG(response.data.link.profile_img);
@@ -142,7 +139,7 @@ const PassengerProfileContent = () => {
 
     fetchProfileData();
     fetchProfileIMG();
-  }, [uid]);
+  }, [decryptedUID]);
 
   const handleProfileEdit = async (e) => {
     e.preventDefault();
@@ -195,12 +192,12 @@ const PassengerProfileContent = () => {
     try {
       const formData = {
         profile_img: profileIMG,
-        uid: uid,
+        uid: decryptedUID,
       };
 
       const res = await axiosInstance.post(
         `${process.env.REACT_APP_BASE_URL}/passengers/uploadProfileImage`,
-        formData
+        { formData, decryptedUID }
       );
 
       if (res.status === 200) {
@@ -251,7 +248,7 @@ const PassengerProfileContent = () => {
               alt="Not available"
             />
             <form onSubmit={handleProfileImg}>
-              <input type="hidden" name="uid" value={uid} />
+              <input type="hidden" name="uid" value={decryptedUID} />
               <div className="input-group me-5 py-3">
                 <IKContext
                   publicKey="public_ytabO1+xt+yMhICKtVeVGbWi/u8="
@@ -261,7 +258,7 @@ const PassengerProfileContent = () => {
                   <IKUpload
                     required
                     className="form-control"
-                    fileName={`${uid}_passengerProfileIMG.jpg`}
+                    fileName={`${decryptedUID}_passengerProfileIMG.jpg`}
                     folder="Home/Tripto/passengers"
                     tags={["tag1"]}
                     useUniqueFileName={true}
@@ -283,8 +280,8 @@ const PassengerProfileContent = () => {
           </div>
           <div className="col-lg-9 p-4 ">
             <form onSubmit={handleProfileEdit}>
-              <input type="hidden" name="uid" value={uid} />
-              <input type="hidden" name="user_type" value={userType} />
+              <input type="hidden" name="uid" value={decryptedUID} />
+              <input type="hidden" name="user_type" value={decryptedUT} />
               <div className="input-group mb-4">
                 <span className="input-group-text">Name</span>
                 <input

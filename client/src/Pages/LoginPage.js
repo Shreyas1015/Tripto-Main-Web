@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../API/axiosInstance";
+import secureLocalStorage from "react-secure-storage";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -93,20 +94,26 @@ const LoginPage = () => {
       const userId = loginRes.data.uid;
       const userType = loginRes.data.user_type;
 
-      localStorage.setItem("user_type", userType);
+      secureLocalStorage.setItem("uid", userId);
+      secureLocalStorage.setItem("user_type", userType);
+
+
+      const encryptedUID = localStorage.getItem("@secure.n.uid");
+      const decryptedUserType = secureLocalStorage.getItem("user_type");
+
 
       // eslint-disable-next-line eqeqeq
       if (userType == 1) {
-        navigate(`/admindashboard?uid=${userId}`);
+        navigate(`/admindashboard?uid=${encryptedUID}`);
         // eslint-disable-next-line eqeqeq
       } else if (userType == 2) {
-        navigate(`/passengerprofile?uid=${userId}`);
+        navigate(`/passengerprofile?uid=${encryptedUID}`);
         // eslint-disable-next-line eqeqeq
       } else if (userType == 3) {
-        navigate(`/driversdocumentverification?uid=${userId}`);
+        navigate(`/driversdocumentverification?uid=${encryptedUID}`);
         // eslint-disable-next-line eqeqeq
       } else if (userType == 4) {
-        navigate(`/vendorsdashboard?uid=${userId}`);
+        navigate(`/vendorsdashboard?uid=${encryptedUID}`);
       }
 
       alert("Logged In Successfully");

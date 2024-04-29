@@ -3,12 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { IKContext, IKUpload } from "imagekitio-react";
 import axiosInstance from "../../API/axiosInstance";
 import TotalDocsCards from "./TotalDocsCards";
+import secureLocalStorage from "react-secure-storage";
 
 const DriversVerificationContent = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const uid = new URLSearchParams(location.search).get("uid");
+  const uid = localStorage.getItem("@secure.n.uid");
+  const decryptedUID = secureLocalStorage.getItem("uid");
 
+  console.log("User Id : ", decryptedUID);
   console.log("User Id : ", uid);
 
   const [aadharFront, setAadharFront] = useState("");
@@ -43,7 +45,7 @@ const DriversVerificationContent = () => {
     taxReceipt: "",
   });
   const [carDetails, setCarDetails] = useState({
-    uid: uid,
+    uid: decryptedUID,
     car_name: "",
     model_year: "",
     car_number: "",
@@ -51,13 +53,13 @@ const DriversVerificationContent = () => {
     submit_status: "",
   });
   const [totalDocs, setTotalDocs] = useState({
-    uid: uid,
+    uid: decryptedUID,
     total_documents: "",
     verified_documents: "",
     pending_documents: "",
   });
   const [carDetails2, setCarDetails2] = useState({
-    uid: uid,
+    uid: decryptedUID,
     car_name: "",
     model_year: "",
     car_number: "",
@@ -65,14 +67,14 @@ const DriversVerificationContent = () => {
     submit_status: "",
   });
   const [profileData, setProfileData] = useState({
-    uid: uid,
+    uid: decryptedUID,
     name: "",
     email: "",
     emailOtp: "",
     phone_number: "",
   });
   const [updatedProfileData, setUpdatedProfileData] = useState({
-    uid: uid,
+    uid: decryptedUID,
     name: "",
     email: "",
     emailOtp: "",
@@ -84,7 +86,7 @@ const DriversVerificationContent = () => {
     try {
       const res = await axiosInstance.post(
         `${process.env.REACT_APP_BASE_URL}/drivers/sendProfileUpdateEmailVerification`,
-        { uid }
+        { decryptedUID }
       );
 
       setPreviousEmail(res.data.email);
@@ -130,7 +132,7 @@ const DriversVerificationContent = () => {
 
     try {
       const formData = {
-        uid: uid,
+        uid: decryptedUID,
         dcd_id: dcdID,
         // Personal Details
         aadharFront: aadharFront,
@@ -201,7 +203,7 @@ const DriversVerificationContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchParticularDocStatus`,
-          { uid }
+          { decryptedUID }
         );
 
         if (response.status === 200) {
@@ -218,7 +220,7 @@ const DriversVerificationContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchProfileData`,
-          { uid }
+          { decryptedUID }
         );
 
         if (response.status === 200) {
@@ -235,7 +237,7 @@ const DriversVerificationContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchCarDetails`,
-          { uid }
+          { decryptedUID }
         );
 
         setCarDetails2(response.data);
@@ -249,7 +251,7 @@ const DriversVerificationContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/handleTotalDocs`,
-          { uid }
+          { decryptedUID }
         );
 
         setTotalDocs(response.data);
@@ -263,7 +265,7 @@ const DriversVerificationContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchDcdID`,
-          { uid }
+          { decryptedUID }
         );
 
         setDcdID(response.data);
@@ -277,7 +279,7 @@ const DriversVerificationContent = () => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchDocLinks`,
-          { uid }
+          { decryptedUID }
         );
 
         setDocsView(response.data);
@@ -293,7 +295,7 @@ const DriversVerificationContent = () => {
     handleTotalDocs();
     fetchDocLinks();
     fetchDcdID();
-  }, [uid]);
+  }, [decryptedUID]);
 
   const handleProfileEdit = async (e) => {
     e.preventDefault();
@@ -434,7 +436,7 @@ const DriversVerificationContent = () => {
           </div>
           <div className="col-lg-9 p-4 ">
             <form onSubmit={handleProfileEdit}>
-              <input type="hidden" name="uid" value={uid} />
+              <input type="hidden" name="uid" value={decryptedUID} />
               <div className="input-group mb-3">
                 <span className="input-group-text">Name</span>
                 <input

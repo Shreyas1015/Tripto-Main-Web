@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../../API/axiosInstance";
+import secureLocalStorage from "react-secure-storage";
 
 const DriversSidebar = (props) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const uid = new URLSearchParams(location.search).get("uid");
+  const uid = localStorage.getItem("@secure.n.uid");
+  const decryptedUID = secureLocalStorage.getItem("uid");
   const [isOpen, setIsOpen] = useState(true);
   const [validDriver, setValidDriver] = useState(0);
-
-  console.log("Passenger Id : ", uid);
 
   const BackToLogin = () => {
     navigate("/");
@@ -20,7 +19,7 @@ const DriversSidebar = (props) => {
       try {
         const response = await axiosInstance.post(
           `${process.env.REACT_APP_BASE_URL}/drivers/fetchParticularDocStatus`,
-          { uid }
+          { decryptedUID }
         );
 
         if (response.status === 200) {
@@ -34,9 +33,9 @@ const DriversSidebar = (props) => {
     };
 
     fetchStatusIndicators();
-  }, [uid]);
+  }, [decryptedUID]);
 
-  if (!uid) {
+  if (!decryptedUID) {
     return (
       <>
         <div className="container text-center fw-bold">
@@ -58,7 +57,8 @@ const DriversSidebar = (props) => {
       );
 
       if (response.status === 200) {
-        window.localStorage.removeItem("user_type");
+        window.localStorage.removeItem("@secure.n.user_type");
+        window.localStorage.removeItem("@secure.n.uid");
         navigate("/");
         alert("Logged Out Successfully");
       } else {

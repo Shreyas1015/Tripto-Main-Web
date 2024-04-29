@@ -1,27 +1,25 @@
 require("dotenv").config();
-const nodemailer = require("nodemailer")
+const nodemailer = require("nodemailer");
 const asyncHand = require("express-async-handler");
 const connection = require("../config/dbConfig");
 const ImageKit = require("imagekit");
 const { authenticateUser } = require("../middlewares/authMiddleware");
 
-
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   port: 465,
   secure: true,
   logger: true,
   debug: true,
   secureConnection: false,
   auth: {
-    user: 'triptotours.com@gmail.com',
-    pass: 'vdgg zkjt ugxk xwso',
+    user: "triptotours.com@gmail.com",
+    pass: "vdgg zkjt ugxk xwso",
   },
   tls: {
-    rejectUnauthorized: true
-  }
+    rejectUnauthorized: true,
+  },
 });
-
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -140,182 +138,161 @@ const driversDocumentUpload = asyncHand(async (req, res) => {
 });
 
 const fetchDocumentLink = asyncHand((req, res) => {
-  const { uid, documentType } = req.body;
+  authenticateUser(req, res, () => {
+    const { decryptedUID, documentType } = req.body;
 
-  const searchQuery = "Select ? from drivers where uid = ?";
+    const searchQuery = "Select ? from drivers where uid = ?";
 
-  connection.query(searchQuery, documentType, uid, (err, result) => {
-    if (err) {
-      console.error(`Error in searching for documents: ${err}`);
-      res.status(500).json({ error: "Internal Server error" });
-    } else {
-      if (result.length == 0) {
-        console.error("No Documents Found", err);
-        res.status(404).json({ message: "No Document Found!" });
+    connection.query(searchQuery, documentType, decryptedUID, (err, result) => {
+      if (err) {
+        console.error(`Error in searching for documents: ${err}`);
+        res.status(500).json({ error: "Internal Server error" });
       } else {
-        console.log("Document Link fetched");
-        res.status(200).json({ link: result[0] });
+        if (result.length == 0) {
+          console.error("No Documents Found", err);
+          res.status(404).json({ message: "No Document Found!" });
+        } else {
+          console.log("Document Link fetched");
+          res.status(200).json({ link: result[0] });
+        }
       }
-    }
+    });
   });
 });
 
 const fetchParticularDocStatus = asyncHand((req, res) => {
-  const { uid } = req.body;
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
-  }
-  const query = `
-    SELECT
-      aadharFrontStatus,
-      aadharBackStatus,
-      panCardFrontStatus,
-      selfieStatus,
-      passbookOrChequeStatus,
-      rcStatus,
-      pucStatus,
-      insuranceStatus,
-      permitStatus,
-      fitnessCertificateStatus,
-      taxReceiptStatus,
-      drivingLicenseFrontStatus,
-      drivingLicenseBackStatus,
-      all_documents_status
-    FROM drivers
-    WHERE uid = ?
-  `;
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
 
-  connection.query(query, [uid], (err, result) => {
-    if (err) {
-      console.error("Internal Server error");
-      res.status(500).json({ error: "Internal Server error" });
-    }
-    if (result.length > 0) {
-      res.status(200).json(result[0]);
-    } else {
-      res
-        .status(404)
-        .json({ message: "Status indicators not found for the given UID" });
-    }
+    const query = `
+      SELECT
+        aadharFrontStatus,
+        aadharBackStatus,
+        panCardFrontStatus,
+        selfieStatus,
+        passbookOrChequeStatus,
+        rcStatus,
+        pucStatus,
+        insuranceStatus,
+        permitStatus,
+        fitnessCertificateStatus,
+        taxReceiptStatus,
+        drivingLicenseFrontStatus,
+        drivingLicenseBackStatus,
+        all_documents_status
+      FROM drivers
+      WHERE uid = ?
+    `;
+
+    connection.query(query, [decryptedUID], (err, result) => {
+      if (err) {
+        console.error("Internal Server error");
+        res.status(500).json({ error: "Internal Server error" });
+      }
+      if (result.length > 0) {
+        res.status(200).json(result[0]);
+      } else {
+        res
+          .status(404)
+          .json({ message: "Status indicators not found for the given UID" });
+      }
+    });
   });
 });
 
 const fetchProfileData = asyncHand((req, res) => {
-  const { uid } = req.body;
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
-  }
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
 
-  const searchQuery = "Select * from users where uid = ?";
-  connection.query(searchQuery, uid, (err, result) => {
-    if (err) {
-      console.error(`Error executing query ${err}`);
-      res.status(500).json({ error: "Server Error" });
-    } else {
-      if (result.length === 0) {
-        res.status(404).json({ message: "No such user found." });
+    const searchQuery = "Select * from users where uid = ?";
+    connection.query(searchQuery, decryptedUID, (err, result) => {
+      if (err) {
+        console.error(`Error executing query ${err}`);
+        res.status(500).json({ error: "Server Error" });
       } else {
-        let data = result[0];
-        console.log("Profle Data Fetched");
-        res.status(200).json(data);
+        if (result.length === 0) {
+          res.status(404).json({ message: "No such user found." });
+        } else {
+          let data = result[0];
+          console.log("Profle Data Fetched");
+          res.status(200).json(data);
+        }
       }
-    }
+    });
   });
 });
 
 const updateProfile = asyncHand((req, res) => {
-  const formData = req.body;
-  console.log("FormData.uid :", formData.uid);
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(formData.uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
-  }
+  authenticateUser(req, res, () => {
+    const formData = req.body;
+    console.log("FormData.uid :", formData.uid);
 
-  const updateQuery =
-    "UPDATE users SET email = ?, phone_number = ? WHERE uid = ?";
-  const updateValues = [formData.email, formData.phone_number, formData.uid];
+    const updateQuery =
+      "UPDATE users SET email = ?, phone_number = ? WHERE uid = ?";
+    const updateValues = [formData.email, formData.phone_number, formData.uid];
 
-  connection.query(updateQuery, updateValues, (err, result) => {
-    if (err) {
-      console.error(`Error updating profile: ${err}`);
-      res.status(500).json({ error: "Server Error" });
-    } else {
-      console.log("Profile updated: ", result);
-      res.status(200).json({ message: "Profile Updated Successfully" });
-    }
+    connection.query(updateQuery, updateValues, (err, result) => {
+      if (err) {
+        console.error(`Error updating profile: ${err}`);
+        res.status(500).json({ error: "Server Error" });
+      } else {
+        console.log("Profile updated: ", result);
+        res.status(200).json({ message: "Profile Updated Successfully" });
+      }
+    });
   });
 });
 
 const sendProfileUpdateEmailVerification = asyncHand(async (req, res) => {
-  const { uid } = req.body;
-  const otp = generateOTP();
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
+    const otp = generateOTP();
 
-  try {
-    // Fetch user's email using UID
-    const selectQuery = "SELECT email FROM users WHERE uid = ?";
-    connection.query(selectQuery, [uid], (selectErr, selectResult) => {
-      if (selectErr) {
-        console.error("Error fetching user email:", selectErr);
-        return res.status(500).json({ success: false, email: null });
-      }
-
-      const email = selectResult[0].email;
-
+    try {
+      // Fetch user's email using UID
+      const selectQuery = "SELECT email FROM users WHERE uid = ?";
       connection.query(
-        "INSERT INTO email_verification_otps (email, otp, created_at) VALUES (?, ?, NOW())",
-        [email, otp],
-        (insertErr) => {
-          if (insertErr) {
-            console.error("Error saving email OTP to the database:", insertErr);
+        selectQuery,
+        [decryptedUID],
+        (selectErr, selectResult) => {
+          if (selectErr) {
+            console.error("Error fetching user email:", selectErr);
             return res.status(500).json({ success: false, email: null });
           }
 
-          sendOTPEmail(email, otp);
-          res.status(200).json({ success: true, email });
+          const email = selectResult[0].email;
+
+          connection.query(
+            "INSERT INTO email_verification_otps (email, otp, created_at) VALUES (?, ?, NOW())",
+            [email, otp],
+            (insertErr) => {
+              if (insertErr) {
+                console.error(
+                  "Error saving email OTP to the database:",
+                  insertErr
+                );
+                return res.status(500).json({ success: false, email: null });
+              }
+
+              sendOTPEmail(email, otp);
+              res.status(200).json({ success: true, email });
+            }
+          );
         }
       );
-    });
-  } catch (error) {
-    console.error("Error sending email verification code:", error);
-    res.status(500).json({ success: false, email: null });
-  }
+    } catch (error) {
+      console.error("Error sending email verification code:", error);
+      res.status(500).json({ success: false, email: null });
+    }
+  });
 });
 
 const fetchProfileIMG = asyncHand((req, res) => {
   authenticateUser(req, res, () => {
-    const { uid } = req.body;
+    const { decryptedUID } = req.body;
 
     const query = "select profile_img from drivers where uid = ? ";
-    connection.query(query, [uid], (err, result) => {
+    connection.query(query, [decryptedUID], (err, result) => {
       if (err) {
         console.error(`Failed to execute ${query}`, err);
         res.status(500).json({ message: "Internal Server Error" });
@@ -328,21 +305,8 @@ const fetchProfileIMG = asyncHand((req, res) => {
 });
 
 const uploadProfileImage = asyncHand(async (req, res) => {
-  const formData = req.body;
-
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(formData.uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID: ", authenticatedUserID);
-    console.log("User ID: ", UserID);
-
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
+  authenticateUser(req, res, () => {
+    const formData = req.body;
 
     const checkUidQuery = "SELECT COUNT(*) AS count FROM drivers WHERE uid = ?";
     connection.query(checkUidQuery, [UserID], (checkUidErr, checkUidResult) => {
@@ -387,34 +351,21 @@ const uploadProfileImage = asyncHand(async (req, res) => {
         );
       }
     });
-  }
+  });
 });
 
 const uploadCarDetails = asyncHand((req, res) => {
-  const formData = req.body;
+  authenticateUser(req, res, () => {
+    const formData = req.body;
 
-  const isValidCarNumberFormat = (carNumber) => {
-    const carNumberRegex = /^[A-Za-z]{2}\d{2}[A-Za-z]{2}\d{4}$/;
-    return carNumberRegex.test(carNumber);
-  };
-
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const userID = parseInt(formData.uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID: ", authenticatedUserID);
-    console.log("UserID: ", userID);
-
-    if (authenticatedUserID !== userID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
+    const isValidCarNumberFormat = (carNumber) => {
+      const carNumberRegex = /^[A-Za-z]{2}\d{2}[A-Za-z]{2}\d{4}$/;
+      return carNumberRegex.test(carNumber);
+    };
 
     const query = `
-  INSERT INTO drivers_car_details (uid, car_name, model_year, car_number, car_type, submit_status)
-  VALUES (?, ?, ?, ?, ?, 1)`;
+    INSERT INTO drivers_car_details (uid, car_name, model_year, car_number, car_type, submit_status)
+    VALUES (?, ?, ?, ?, ?, 1)`;
 
     const values = [
       formData.uid,
@@ -443,26 +394,15 @@ const uploadCarDetails = asyncHand((req, res) => {
         }
       }
     });
-  }
+  });
 });
 
 const fetchCarDetails = asyncHand((req, res) => {
-  const { uid } = req.body;
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
 
     const query = "select * from drivers_car_details where uid = ?";
-    connection.query(query, [uid], (err, result) => {
+    connection.query(query, [decryptedUID], (err, result) => {
       if (err) {
         console.error(`Error in retrieving user details: ${err}`);
         res.status(500).json({ error: `Server Error: ${err}` });
@@ -475,12 +415,12 @@ const fetchCarDetails = asyncHand((req, res) => {
         }
       }
     });
-  }
+  });
 });
 
 const handleTotalDocs = asyncHand(async (req, res) => {
   authenticateUser(req, res, () => {
-    const { uid } = req.body;
+    const { decryptedUID } = req.body;
     const queryVerified = ` SELECT COUNT(*) AS verified_documents FROM drivers WHERE uid = ? AND aadharFrontStatus = 1 or aadharBackStatus = 1 or panCardFrontStatus = 1 or selfieStatus = 1 or passbookOrChequeStatus = 1 or rcStatus = 1 or pucStatus = 1 or insuranceStatus = 1 or permitStatus = 1 or fitnessCertificateStatus = 1 or taxReceiptStatus = 1 or drivingLicenseFrontStatus = 1 or drivingLicenseBackStatus = 1`;
 
     const queryPending = `SELECT
@@ -514,109 +454,86 @@ const handleTotalDocs = asyncHand(async (req, res) => {
       "WHERE table_name = 'drivers' AND " +
       "column_name IN ('aadharFront', 'aadharBack', 'panCardFront', 'selfie', 'passbookOrCheque', 'rc', 'puc', 'insurance', 'permit', 'fitnessCertificate', 'taxReceipt', 'drivingLicenseFront', 'drivingLicenseBack'); ";
 
-    connection.query(queryVerified, uid, (errVerified, resultVerified) => {
-      if (errVerified) {
-        console.error("Verified Documents Query Error: ", errVerified);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-
-      connection.query(queryPending, uid, (errPending, resultPending) => {
-        if (errPending) {
-          console.error("Pending Documents Query Error: ", errPending);
+    connection.query(
+      queryVerified,
+      decryptedUID,
+      (errVerified, resultVerified) => {
+        if (errVerified) {
+          console.error("Verified Documents Query Error: ", errVerified);
           return res.status(500).json({ error: "Internal Server Error" });
         }
 
         connection.query(
-          queryTotalColumns,
-          (errTotalColumns, resultTotalColumns) => {
-            if (errTotalColumns) {
-              console.error("Total Columns Query Error: ", errTotalColumns);
+          queryPending,
+          decryptedUID,
+          (errPending, resultPending) => {
+            if (errPending) {
+              console.error("Pending Documents Query Error: ", errPending);
               return res.status(500).json({ error: "Internal Server Error" });
             }
 
-            console.log("Total Docs and Columns Fetched");
-            res.status(200).json({
-              verified_documents: resultVerified[0].verified_documents,
-              pending_documents: resultPending[0].pending_documents,
-              total_documents: resultTotalColumns[0].total_columns,
-            });
+            connection.query(
+              queryTotalColumns,
+              (errTotalColumns, resultTotalColumns) => {
+                if (errTotalColumns) {
+                  console.error("Total Columns Query Error: ", errTotalColumns);
+                  return res
+                    .status(500)
+                    .json({ error: "Internal Server Error" });
+                }
+
+                console.log("Total Docs and Columns Fetched");
+                res.status(200).json({
+                  verified_documents: resultVerified[0].verified_documents,
+                  pending_documents: resultPending[0].pending_documents,
+                  total_documents: resultTotalColumns[0].total_columns,
+                });
+              }
+            );
           }
         );
-      });
-    });
+      }
+    );
   });
 });
 
 const fetchDocLinks = asyncHand((req, res) => {
-  const { uid } = req.body;
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
-  }
-
-  const query = "select * from drivers where uid = ?";
-  connection.query(query, [uid], (err, result) => {
-    if (err) {
-      console.error("Fetch Doc Links Error: ", err);
-      return res.status(500).json({ error: "Server Error" });
-    } else {
-      res.status(200).json(result[0]);
-    }
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
+    console.log(decryptedUID);
+    const query = "select * from drivers where uid = ?";
+    connection.query(query, [decryptedUID], (err, result) => {
+      if (err) {
+        console.error("Fetch Doc Links Error: ", err);
+        return res.status(500).json({ error: "Server Error" });
+      } else {
+        res.status(200).json(result[0]);
+      }
+    });
   });
 });
 
 const fetchDcdID = asyncHand((req, res) => {
-  const { uid } = req.body;
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
-  }
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
 
-  const query = "select dcd_id from drivers_car_details where uid = ?";
-  connection.query(query, [uid], (err, result) => {
-    if (err) {
-      console.error("Fetch dcd_id Error: ", err);
-      return res.status(500).json({ error: "Server Error" });
-    } else {
-      res.status(200).json(result[0].dcd_id);
-    }
+    const query = "select dcd_id from drivers_car_details where uid = ?";
+    connection.query(query, [decryptedUID], (err, result) => {
+      if (err) {
+        console.error("Fetch dcd_id Error: ", err);
+        return res.status(500).json({ error: "Server Error" });
+      } else {
+        res.status(200).json(result[0].dcd_id);
+      }
+    });
   });
 });
 
 const fetchBookingsDetails = asyncHand((req, res) => {
-  const { uid } = req.body;
-  if (!req.user || !req.user.email) {
-    res
-      .status(401)
-      .json({ message: "Unauthorized - Missing or invalid token" });
-  } else {
-    const UserID = parseInt(uid);
-    const authenticatedUserID = req.uid;
-    console.log("authenticatedUserID : ", authenticatedUserID);
-    console.log("USer ID : ", UserID);
-    if (authenticatedUserID !== UserID) {
-      return res.status(403).json({ message: "Forbidden - Access denied" });
-    }
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
 
-    const query = "select * from bookings";
+    const query = "select * from bookings where trip_status = 0";
     connection.query(query, (err, result) => {
       if (err) {
         console.error("Internal Server Error : ", err);
@@ -629,7 +546,130 @@ const fetchBookingsDetails = asyncHand((req, res) => {
         }
       }
     });
-  }
+  });
+});
+
+const fetchParticularBookingsDetails = asyncHand((req, res) => {
+  authenticateUser(req, res, () => {
+    const { decryptedUID, bid } = req.body;
+
+    const query = "select * from bookings where bid = ?";
+    connection.query(query, bid, (err, result) => {
+      if (err) {
+        console.error("Internal Server Error : ", err);
+        return res.status(500).json({ error: "Internal Server Error" });
+      } else {
+        if (result.length === 0) {
+          return res.status(404).json({ message: "No Bookings Found" });
+        } else {
+          res.status(200).json(result[0]);
+        }
+      }
+    });
+  });
+});
+
+const fetchBookingsDataTable = asyncHand((req, res) => {
+  authenticateUser(req, res, () => {
+    const { decryptedUID } = req.body;
+
+    const query1 = "SELECT did FROM drivers WHERE uid = ?";
+    connection.query(query1, decryptedUID, (err1, result1) => {
+      if (err1) {
+        console.error("Internal Server Error: ", err1);
+        return res.status(500).json({ error: "Internal Server Error" });
+      } else {
+        if (result1.length === 0) {
+          return res.status(404).json({ message: "No DID Found" });
+        } else {
+          const did = result1[0].did; // Extracting did from result1
+
+          const query2 = "SELECT * FROM bookings WHERE did = ?";
+          connection.query(query2, did, (err2, result2) => {
+            if (err2) {
+              console.error("Internal Server Error: ", err2);
+              return res.status(500).json({ error: "Internal Server Error" });
+            } else {
+              if (result2.length === 0) {
+                return res.status(404).json({
+                  message: "No Data Found In Bookings Table of this DID",
+                });
+              } else {
+                const pid = result2[0].pid; // Extracting pid from result2
+                const query3 = "SELECT * FROM passengers WHERE pid = ?";
+                connection.query(query3, pid, (err3, result3) => {
+                  if (err3) {
+                    console.error("Internal Server Error: ", err3);
+                    return res
+                      .status(500)
+                      .json({ error: "Internal Server Error" });
+                  } else {
+                    res
+                      .status(200)
+                      .json({ passengerInfo: result3, bookingInfo: result2 });
+                  }
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+  });
+});
+
+const driverAcceptBooking = asyncHand((req, res) => {
+  authenticateUser(req, res, () => {
+    const { decryptedUID, bid, bookingsData } = req.body;
+
+    const query1 = "SELECT did, dcd_id FROM drivers WHERE uid = ?";
+    connection.query(query1, decryptedUID, (err1, result1) => {
+      if (err1) {
+        console.error("Internal Server Error: ", err1);
+        return res.status(500).json({ error: "Internal Server Error" });
+      } else if (result1.length === 0) {
+        return res.status(404).json({ message: "No Driver Found" });
+      } else {
+        const { did, dcd_id } = result1[0];
+
+        const query2 =
+          "SELECT car_type FROM drivers_car_details WHERE dcd_id = ?";
+        connection.query(query2, dcd_id, (err2, result2) => {
+          if (err2) {
+            console.error("Internal Server Error: ", err2);
+            return res.status(500).json({ error: "Internal Server Error" });
+          } else if (result2.length === 0) {
+            return res.status(404).json({ message: "No Car Type Found" });
+          } else {
+            const carType = result2[0].car_type;
+
+            if (carType == bookingsData.selected_car) {
+              const updateQuery =
+                "UPDATE bookings SET did = ?, dcd_id = ?, trip_status = 1 WHERE bid = ?";
+              connection.query(
+                updateQuery,
+                [did, dcd_id, bid],
+                (err3, result3) => {
+                  if (err3) {
+                    console.error("Internal Server Error: ", err3);
+                    return res
+                      .status(500)
+                      .json({ error: "Internal Server Error" });
+                  } else {
+                    res
+                      .status(200)
+                      .json({ message: "Booking updated successfully" });
+                  }
+                }
+              );
+            } else {
+              return res.status(400).json({ error: "Car Type does not match" });
+            }
+          }
+        });
+      }
+    });
+  });
 });
 
 module.exports = {
@@ -648,4 +688,7 @@ module.exports = {
   fetchDocumentLink,
   driversDocumentUpload,
   fetchBookingsDetails,
+  fetchParticularBookingsDetails,
+  driverAcceptBooking,
+  fetchBookingsDataTable,
 };

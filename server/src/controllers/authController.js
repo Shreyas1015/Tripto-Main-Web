@@ -76,7 +76,7 @@ const login = asyncHand((req, res) => {
         const user_type = user.user_type;
 
         const token = jwt.sign({ email: email }, secretKey, {
-          expiresIn: "1h",
+          expiresIn: "10h",
         });
 
         console.log("Generated Token:", token);
@@ -113,7 +113,7 @@ const refresh = asyncHand((req, res) => {
 
   console.log("Received Refresh Token:", refreshToken);
 
-  const token = jwt.sign(user, secretKey, { expiresIn: "1h" });
+  const token = jwt.sign(user, secretKey, { expiresIn: "10h" });
   const newRefreshToken = generateRefreshToken(user.email);
 
   console.log("New Access Token:", token);

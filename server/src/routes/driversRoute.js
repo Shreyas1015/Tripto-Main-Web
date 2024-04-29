@@ -16,6 +16,9 @@ const {
   fetchDocLinks,
   fetchDcdID,
   fetchBookingsDetails,
+  fetchParticularBookingsDetails,
+  driverAcceptBooking,
+  fetchBookingsDataTable,
 } = require("../controllers/driversController");
 const router = express.Router();
 
@@ -47,5 +50,16 @@ router.post("/handleTotalDocs", authenticateToken, handleTotalDocs);
 router.post("/fetchDocLinks", authenticateToken, fetchDocLinks);
 router.post("/fetchDcdID", authenticateToken, fetchDcdID);
 router.post("/fetchBookingsDetails", authenticateToken, fetchBookingsDetails);
+router.post(
+  "/fetchParticularBookingsDetails",
+  authenticateToken,
+  fetchParticularBookingsDetails
+);
+router.post("/driverAcceptBooking", authenticateToken, driverAcceptBooking);
+router.post(
+  "/fetchBookingsDataTable",
+  authenticateToken,
+  fetchBookingsDataTable
+);
 
 module.exports = router;

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "../../API/axiosInstance";
+import secureLocalStorage from "react-secure-storage";
 
 const PassengerSidebar = (props) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const uid = new URLSearchParams(location.search).get("uid");
-  const [isOpen, setIsOpen] = useState(true);
 
-  console.log("Passenger Id : ", uid);
+  const uid = localStorage.getItem("@secure.n.uid");
+  const decryptedUID = secureLocalStorage.getItem("uid");
+  const [isOpen, setIsOpen] = useState(true);
 
   const BackToLogin = () => {
     navigate("/");
@@ -77,14 +77,14 @@ const PassengerSidebar = (props) => {
           </Link>
           <Link
             className="text-decoration-none"
-            to={`/passengerhomepage?uid=${uid}`}
+            to={`/passengertrip?uid=${uid}`}
           >
             <div className="sidebar-position">
               <i
                 style={{ color: "#0bbfe0" }}
                 className="fa-brands fa-windows"
               ></i>
-              <span> Home</span>
+              <span> Book Your Trip</span>
             </div>
           </Link>
           <Link

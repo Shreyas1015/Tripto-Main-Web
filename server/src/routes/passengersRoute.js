@@ -10,6 +10,7 @@ const {
   handleOneWayTrip,
   handleRoundTrip,
   fetchPID,
+  fetchBookingsDataTable,
 } = require("../controllers/passengersController");
 
 const router = express.Router();
@@ -28,5 +29,10 @@ router.post("/fetchProfileIMG", authenticateToken, fetchProfileIMG);
 router.post("/handleOneWayTrip", authenticateToken, handleOneWayTrip);
 router.post("/handleRoundTrip", authenticateToken, handleRoundTrip);
 router.post("/fetchPID", authenticateToken, fetchPID);
+router.post(
+  "/fetchBookingsDataTable",
+  authenticateToken,
+  fetchBookingsDataTable
+);
 
 module.exports = router;

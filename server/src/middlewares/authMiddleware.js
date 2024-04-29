@@ -74,17 +74,24 @@ const authenticateUser = async (req, res, next) => {
       .json({ message: "Unauthorized - Missing or invalid token" });
   }
 
-  const UserID = parseInt(req.body.uid);
+  const UserIDFromBody = parseInt(req.body.decryptedUID);
+  const UserIDFromQuery = parseInt(req.query.decryptedUID);
+  console.log("User Id From Body ", UserIDFromBody);
+  console.log("User Id From Query ", UserIDFromBody);
+
   const authenticatedUserID = req.uid;
   console.log("authenticatedUserID: ", authenticatedUserID);
-  console.log("User ID: ", UserID);
 
-  if (authenticatedUserID !== UserID) {
+  if (
+    (UserIDFromBody && authenticatedUserID === UserIDFromBody) ||
+    (UserIDFromQuery && authenticatedUserID === UserIDFromQuery)
+  ) {
+    console.log("User authenticated successfully");
+    next();
+  } else {
     console.log("Forbidden - Access denied");
     return res.status(403).json({ message: "Forbidden - Access denied" });
   }
-
-  next();
 };
 
 module.exports = {

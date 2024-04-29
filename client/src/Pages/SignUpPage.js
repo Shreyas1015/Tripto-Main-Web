@@ -3,10 +3,12 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../API/axiosInstance";
 
+
 const SignUpPage = () => {
   const navigate = useNavigate();
   const [showUserTypePopup, setShowUserTypePopup] = useState(true);
   const [selectedUserType, setSelectedUserType] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
