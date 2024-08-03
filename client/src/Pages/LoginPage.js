@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../API/axiosInstance";
 import secureLocalStorage from "react-secure-storage";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState("");
+  // const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     emailOtp: "",
@@ -27,16 +28,13 @@ const LoginPage = () => {
       );
 
       if (res.data.success) {
-        alert("Email verification code sent successfully");
+        toast.success("Email verification code sent successfully");
       } else {
-        setErrorMessage("Failed to send email verification code");
+        toast.error("Failed to send email verification code");
       }
     } catch (error) {
       console.error(error);
-      alert("User Not Registered");
-      setErrorMessage(
-        "An error occurred while sending email verification code"
-      );
+      toast.error("User Not Registered");
     }
   };
 
@@ -51,14 +49,11 @@ const LoginPage = () => {
       );
 
       if (res.data.success) {
-        alert("Email verified successfully");
-      } else {
-        setErrorMessage("Failed to verify Email Otp");
+        toast.success("Email verified successfully");
       }
     } catch (error) {
       console.error(error);
-      alert("Invalid OTP");
-      setErrorMessage("Invalid Otp");
+      toast.error("Invalid OTP");
     }
   };
 
@@ -66,7 +61,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     if (!formData.emailOtp) {
-      setErrorMessage("Please enter both email and phone OTPs");
+      toast.error("Please enter both email and phone OTPs");
       return;
     }
 
@@ -80,7 +75,7 @@ const LoginPage = () => {
       );
 
       if (!verifyEmailRes.data.success) {
-        setErrorMessage("Email OTP verification failed");
+        toast.error("Email OTP verification failed");
         return;
       }
 
@@ -97,17 +92,15 @@ const LoginPage = () => {
       secureLocalStorage.setItem("uid", userId);
       secureLocalStorage.setItem("user_type", userType);
 
-
       const encryptedUID = localStorage.getItem("@secure.n.uid");
-      const decryptedUserType = secureLocalStorage.getItem("user_type");
-
+      // const decryptedUserType = secureLocalStorage.getItem("user_type");
 
       // eslint-disable-next-line eqeqeq
       if (userType == 1) {
         navigate(`/admindashboard?uid=${encryptedUID}`);
         // eslint-disable-next-line eqeqeq
       } else if (userType == 2) {
-        navigate(`/passengerprofile?uid=${encryptedUID}`);
+        navigate(`/passengertrip?uid=${encryptedUID}`);
         // eslint-disable-next-line eqeqeq
       } else if (userType == 3) {
         navigate(`/driversdocumentverification?uid=${encryptedUID}`);
@@ -116,13 +109,13 @@ const LoginPage = () => {
         navigate(`/vendorsdashboard?uid=${encryptedUID}`);
       }
 
-      alert("Logged In Successfully");
+      toast.success("Logged In Successfully");
     } catch (error) {
       console.error(error);
       if (error.response && error.response.data && error.response.data.error) {
-        setErrorMessage(error.response.data.error);
+        toast.error(error.response.data.error);
       } else {
-        setErrorMessage("An error occurred during login.");
+        toast.error("An error occurred during login.");
       }
     }
   };
@@ -135,7 +128,7 @@ const LoginPage = () => {
             className="object-fit-cover position-absolute z-n1 m-0 p-0"
             src="/Images/login&signup_image.png"
             alt=""
-            style={{ height: "100vh" }}
+            style={{ height: "100%" }}
           />
           <div className="col-lg-6 m-0 p-0"></div>
           <div className="col-lg-6 m-0 p-0">
@@ -200,9 +193,7 @@ const LoginPage = () => {
                     </button>
                   </div>
                 </div>
-                <div className="mb-1">
-                  <h5 className="text-danger">{errorMessage}</h5>
-                </div>
+
                 <br />
                 <div className="row">
                   <div className="col-lg-6">

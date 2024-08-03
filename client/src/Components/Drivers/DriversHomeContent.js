@@ -55,11 +55,11 @@ const DriversHomeContent = () => {
         <hr />
         <div className="bookings row">
           {bookingsData.map((booking) => (
-            <div className="col-lg-4" key={booking.bid}>
-              <div className="card my-3 mx-auto" style={{ width: "20rem" }}>
+            <div className="col-lg-12" key={booking.bid}>
+              <div className="card my-3 mx-auto" style={{ height: "20rem" }}>
                 <img
-                  src="/Images/2-Cars.png"
-                  className="card-img-top"
+                  // src="/Images/2-Cars.png"
+                  className="card-img-top img-fluid"
                   alt="Booking"
                 />
                 <div className="card-body">

@@ -9,6 +9,12 @@
   scroll-behavior: smooth;
 }
 
+/* 
+#222831 - NAVY
+#393E46 - GREY
+#00ADB5 - DARK BLUE
+#00FFF5 - LIGHT BLUE
+ */
 .glassomorphic-effect {
   background: rgba(255, 255, 255, 0.05);
   box-shadow: 2px 2px 30px rgba(0, 0, 0, 0.5);
@@ -183,4 +189,65 @@
   height: 30vh;
   border-radius: 50%;
   border: 1px solid #272727;
+}
+
+.trip-selection-card {
+  max-width: 40%;
+}
+
+.custom-table th,
+.custom-table td {
+  text-align: center;
+  border: 0.1px solid rgba(0, 0, 0, 0.24);
+}
+
+.custom-table th {
+  background-color: #f5f5f5;
+}
+
+.custom-table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.booking-success-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  text-align: center;
+}
+
+.car-animation {
+  width: 100px; /* Adjust size as needed */
+  height: 100px; /* Adjust size as needed */
+  /* background-image: url("path_to_your_car_image");  */
+  background-size: contain;
+  animation: moveCar 3s ease forwards;
+}
+
+.success-message {
+  margin-top: 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: green;
+  animation: fadeIn 1s ease forwards;
+}
+
+@keyframes moveCar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }

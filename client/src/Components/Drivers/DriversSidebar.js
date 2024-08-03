@@ -7,7 +7,7 @@ const DriversSidebar = (props) => {
   const navigate = useNavigate();
   const uid = localStorage.getItem("@secure.n.uid");
   const decryptedUID = secureLocalStorage.getItem("uid");
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [validDriver, setValidDriver] = useState(0);
 
   const BackToLogin = () => {

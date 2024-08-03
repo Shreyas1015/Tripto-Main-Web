@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../API/axiosInstance";
 import secureLocalStorage from "react-secure-storage";
 
@@ -8,7 +8,7 @@ const PassengerSidebar = (props) => {
 
   const uid = localStorage.getItem("@secure.n.uid");
   const decryptedUID = secureLocalStorage.getItem("uid");
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const BackToLogin = () => {
     navigate("/");
@@ -51,8 +51,8 @@ const PassengerSidebar = (props) => {
     <>
       <div className="page ">
         <div className="row container-fluid">
-          <div className={`col-lg-${isOpen ? "2" : "0"} transition-col`}></div>
-          <div className={`col-lg-${isOpen ? "10" : "12"} transition-col`}>
+          <div className={`col-${isOpen ? "2" : "0"} transition-col`}></div>
+          <div className={`col-${isOpen ? "10" : "12"} transition-col`}>
             <div className="content">{props.contentComponent}</div>
           </div>
         </div>

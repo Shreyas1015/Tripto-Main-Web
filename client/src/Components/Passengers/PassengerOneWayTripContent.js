@@ -1,16 +1,31 @@
+import * as React from "react";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import Slide from "@mui/material/Slide";
+// import { TransitionProps } from "@mui/material/transitions";
 import axiosInstance from "../../API/axiosInstance";
-import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
+import { useState, useEffect } from "react";
+import { RadioGroup, FormControlLabel, Radio } from "@mui/material";
+import toast from "react-hot-toast";
 
-const PassengerOneWayTripContent = () => {
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
+export default function PassengerOneWayTripContent() {
   const navigate = useNavigate();
   const uid = localStorage.getItem("@secure.n.uid");
   const decryptedUID = secureLocalStorage.getItem("uid");
   const [fourSeater, setFourSeater] = useState(0);
   const [sixSeater, setSixSeater] = useState(0);
-
   const [pid, setPid] = useState(0);
+
   const [oneWayTrip, setOneWayTrip] = useState({
     uid: decryptedUID,
     pid: "",
@@ -20,7 +35,7 @@ const PassengerOneWayTripContent = () => {
   });
 
   const [selectedCar, setSelectedCar] = useState("");
-  const [showCarSelection, setShowCarSelection] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const fetchPID = async () => {
@@ -29,21 +44,28 @@ const PassengerOneWayTripContent = () => {
           `${process.env.REACT_APP_BASE_URL}/passengers/fetchPID`,
           { decryptedUID }
         );
-
         setPid(parseInt(res.data, 10));
         console.log("PID : ", res.data);
       } catch (error) {
         console.error("Fetch PID Error: ", error.message);
       }
     };
-
     fetchPID();
   }, [decryptedUID]);
 
   const handlePhaseOne = (e) => {
     e.preventDefault();
+
+    const now = new Date();
+    const pickupDateTime = new Date(oneWayTrip.pickup_date_time);
+
+    if (pickupDateTime <= now) {
+      toast.error("Pickup date and time must be in the future.");
+      return;
+    }
+
     calculatingPrice();
-    setShowCarSelection(true); // Show car selection after phase one
+    setOpen(true); // Show dialog after phase one
   };
 
   const calculatingPrice = () => {
@@ -56,6 +78,11 @@ const PassengerOneWayTripContent = () => {
 
   const handlePhaseTwo = async (e) => {
     e.preventDefault();
+
+    if (!selectedCar) {
+      alert("Please select a car type.");
+      return;
+    }
 
     try {
       const distance = 50; // Dummy distance in kilometers
@@ -88,14 +115,16 @@ const PassengerOneWayTripContent = () => {
       );
 
       if (res.status === 200) {
-        alert(`Your trip has been booked successfully!`);
+        toast.success(
+          `Your booking has been confirmed. Our Driver Will Soon Connect With You!`
+        );
         setOneWayTrip({
           pickup_location: "",
           drop_location: "",
           pickup_date_time: "",
         });
         setSelectedCar("");
-        setShowCarSelection(false);
+        setOpen(false);
       } else {
         console.error("Error in Booking Trip!");
         alert("Error in Booking Trip!");
@@ -112,144 +141,121 @@ const PassengerOneWayTripContent = () => {
 
   if (!uid) {
     return (
-      <>
-        <div className="container text-center fw-bold">
-          <h2>INVALID URL. Please provide a valid UID.</h2>
-          <button onClick={BackToLogin} className="btn blue-buttons">
-            Back to Login
-          </button>
-        </div>
-      </>
+      <div className="container text-center fw-bold">
+        <h2>INVALID URL. Please provide a valid UID.</h2>
+        <button onClick={BackToLogin} className="btn blue-buttons">
+          Back to Login
+        </button>
+      </div>
     );
   }
 
   return (
-    <>
-      <div className="container-fluid">
-        <h2>One Way Trip</h2>
-        <hr />
-        <div className="row">
-          <div className="col-lg-6">
-            <div className="one-way-trip">
-              <div
-                className="card mx-auto my-5"
-                style={{ width: "25rem", height: "21rem" }}
-              >
-                <div className="card-body">
-                  <h5 className="card-title">
-                    Select Pickup and Drop Location
-                  </h5>
-                  <hr />
-                  <form onSubmit={handlePhaseOne}>
-                    <div className="input-group mb-4">
-                      <span className="input-group-text">Pickup Location</span>
-                      <input
-                        name="pickup_location"
-                        type="url"
-                        className="form-control"
-                        required
-                        value={oneWayTrip.pickup_location}
-                        onChange={(e) =>
-                          setOneWayTrip({
-                            ...oneWayTrip,
-                            pickup_location: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="input-group mb-4">
-                      <span className="input-group-text">Drop Location</span>
-                      <input
-                        name="drop_location"
-                        type="url"
-                        className="form-control"
-                        required
-                        value={oneWayTrip.drop_location}
-                        onChange={(e) =>
-                          setOneWayTrip({
-                            ...oneWayTrip,
-                            drop_location: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="input-group mb-4">
-                      <span className="input-group-text">Date and Time</span>
-                      <input
-                        type="datetime-local"
-                        className="form-control"
-                        required
-                        value={oneWayTrip.pickup_date_time}
-                        onChange={(e) =>
-                          setOneWayTrip({
-                            ...oneWayTrip,
-                            pickup_date_time: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <input
-                      type="submit"
-                      value="Phase 1: Submit Locations and Time"
-                      className="blue-buttons form-control"
-                    />
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="col-lg-6">
-            {showCarSelection && (
-              <div className="car-selection">
-                <div className="card mx-auto my-5" style={{ width: "25rem" }}>
-                  <div className="card-body">
-                    <h5 className="card-title">Select Car Type</h5>
-                    <hr />
-                    <div className="mb-4">
-                      <label htmlFor="4-seater" className="form-label">
-                        4-seater
-                      </label>
-                      <input
-                        type="radio"
-                        id="4-seater"
-                        name="car-type"
-                        value="4-seater"
-                        onChange={(e) => setSelectedCar(e.target.value)}
-                        checked={selectedCar === "4-seater"}
-                      />
+    <div className="container-fluid">
+      <h2>One Way Trip</h2>
+      <hr />
 
-                      <span>{fourSeater}</span>
-                    </div>
-
-                    <div className="mb-4">
-                      <label htmlFor="6-seater" className="form-label">
-                        6-seater
-                      </label>
-                      <input
-                        type="radio"
-                        id="6-seater"
-                        name="car-type"
-                        value="6-seater"
-                        onChange={(e) => setSelectedCar(e.target.value)}
-                        checked={selectedCar === "6-seater"}
-                      />
-                      <span>{sixSeater}</span>
-                    </div>
-                    <input
-                      type="submit"
-                      value="Phase 2: Book Trip"
-                      className="blue-buttons form-control"
-                      onClick={handlePhaseTwo}
-                    />
-                  </div>
-                </div>
+      <div className="one-way-trip">
+        <div
+          className="card mx-auto my-5"
+          style={{ width: "25rem", height: "21rem" }}
+        >
+          <div className="card-body">
+            <h5 className="card-title">Select Pickup and Drop Location</h5>
+            <hr />
+            <form onSubmit={handlePhaseOne}>
+              <div className="input-group mb-4">
+                <span className="input-group-text">Pickup Location</span>
+                <input
+                  name="pickup_location"
+                  type="url"
+                  className="form-control"
+                  required
+                  value={oneWayTrip.pickup_location}
+                  onChange={(e) =>
+                    setOneWayTrip({
+                      ...oneWayTrip,
+                      pickup_location: e.target.value,
+                    })
+                  }
+                />
               </div>
-            )}
+              <div className="input-group mb-4">
+                <span className="input-group-text">Drop Location</span>
+                <input
+                  name="drop_location"
+                  type="url"
+                  className="form-control"
+                  required
+                  value={oneWayTrip.drop_location}
+                  onChange={(e) =>
+                    setOneWayTrip({
+                      ...oneWayTrip,
+                      drop_location: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="input-group mb-4">
+                <span className="input-group-text">Date and Time</span>
+                <input
+                  type="datetime-local"
+                  className="form-control"
+                  required
+                  value={oneWayTrip.pickup_date_time}
+                  onChange={(e) =>
+                    setOneWayTrip({
+                      ...oneWayTrip,
+                      pickup_date_time: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <input
+                type="submit"
+                value="Phase 1: Submit Locations and Time"
+                className="blue-buttons form-control"
+              />
+            </form>
           </div>
         </div>
       </div>
-    </>
-  );
-};
 
-export default PassengerOneWayTripContent;
+      <Dialog
+        open={open}
+        TransitionComponent={Transition}
+        keepMounted
+        onClose={() => setOpen(false)}
+        aria-describedby="alert-dialog-slide-description"
+      >
+        <DialogTitle>Select Car Type</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-slide-description">
+            <i>Select Car type according to seating capacity</i>
+          </DialogContentText>
+          <RadioGroup
+            value={selectedCar}
+            onChange={(e) => setSelectedCar(e.target.value)}
+          >
+            <FormControlLabel
+              value="4-seater"
+              control={<Radio />}
+              label={`4-seater - $${fourSeater}`}
+            />
+            <FormControlLabel
+              value="6-seater"
+              control={<Radio />}
+              label={`6-seater - $${sixSeater}`}
+            />
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={handlePhaseTwo} disabled={!selectedCar}>
+            Book Trip
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+}

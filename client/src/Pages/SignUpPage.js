@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../API/axiosInstance";
-
+import toast from "react-hot-toast";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -17,8 +17,6 @@ const SignUpPage = () => {
     // phoneOtp: "",
     user_type: "",
   });
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,15 +31,11 @@ const SignUpPage = () => {
       );
 
       if (res.data.success) {
-        alert("Email verification code sent successfully");
-      } else {
-        setErrorMessage("Failed to send email verification code");
+        toast.success("Email verification code sent successfully");
       }
     } catch (error) {
       console.error(error);
-      setErrorMessage(
-        "An error occurred while sending email verification code"
-      );
+      toast.error("An error occurred while sending email verification code");
     }
   };
 
@@ -56,14 +50,11 @@ const SignUpPage = () => {
       );
 
       if (res.data.success) {
-        alert("Email verified successfully");
-      } else {
-        setErrorMessage("Failed to verify Email Otp");
+        toast.success("Email verified successfully");
       }
     } catch (error) {
       console.error(error);
-      alert("Invalid OTP");
-      setErrorMessage("Invalid Otp");
+      toast.error("Invalid OTP");
     }
   };
 
@@ -97,7 +88,7 @@ const SignUpPage = () => {
     e.preventDefault();
 
     if (!formData.emailOtp) {
-      setErrorMessage("Please enter email OTPs");
+      toast.error("Please enter email OTPs");
       return;
     }
 
@@ -111,27 +102,28 @@ const SignUpPage = () => {
       );
 
       if (!verifyEmailRes.data.success) {
-        setErrorMessage("Email OTP verification failed");
+        toast.error("Email OTP verification failed");
         return;
       }
 
+      if (!/^\d{10}$/.test(formData.phone_number)) {
+        toast.error("Phone number must be exactly 10 digits");
+        return;
+      }
       const response = await axiosInstance.post(
         `${process.env.REACT_APP_BASE_URL}/auth/signup_with_verification`,
         formData
       );
 
-      setSuccessMessage(response.data.message);
-      setErrorMessage("");
-      alert("Signed Up Successfully");
+      toast.success("Signed Up Successfully");
       navigate("/");
     } catch (error) {
       console.error("Error:", error);
       if (error.response && error.response.data && error.response.data.error) {
-        setErrorMessage(error.response.data.error);
+        toast.error(error.response.data.error);
       } else {
-        setErrorMessage("An error occurred during sign up.");
+        toast.error(error.response.data.error);
       }
-      setSuccessMessage("");
     }
   };
 
@@ -285,14 +277,14 @@ const SignUpPage = () => {
                         Phone Number
                       </label>
                       <input
-                        type="text"
+                        type="number"
                         name="phone_number"
                         className="form-control"
                         id="phone_number"
                         placeholder="Enter your phone number"
-                        required
                         onChange={handleChange}
                         value={formData.phone_number}
+                        required
                       />
                       {/* <button
                     className="btn btn-outline-secondary"
@@ -321,17 +313,6 @@ const SignUpPage = () => {
                   />
                 </div> */}
 
-                <div className="mb-1">
-                  <h5 className="text-danger">
-                    {errorMessage && (
-                      <div className="error">{errorMessage}</div>
-                    )}
-
-                    {successMessage && (
-                      <div className="success">{successMessage}</div>
-                    )}
-                  </h5>
-                </div>
                 <br />
 
                 <input

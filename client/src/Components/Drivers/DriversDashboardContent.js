@@ -63,12 +63,12 @@ const DriversDashboardContent = () => {
         <h2>Drivers Dashboard</h2>
         <hr />
         <div className="table-responsive">
-          <table className="table text-center table-responsive table-bordered rounded">
+          <table className="table text-center table-bordered rounded-3">
             <thead className="table-dark">
               <tr>
-                <th>Sr No.</th>
-                <th>Pick-Up Location</th>
-                <th>Drop Location</th>
+                <th className="px-4">Sr No.</th>
+                <th className="px-4">Pick-Up Location</th>
+                <th className="px-4">Drop Location</th>
                 <th>Pick-Up Date & Time</th>
                 <th>Return Date & Time</th>
                 <th>No. Of Days</th>

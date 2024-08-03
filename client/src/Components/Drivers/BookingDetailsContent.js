@@ -9,7 +9,6 @@ const BookingDetailsContent = () => {
   const bid = new URLSearchParams(location.search).get("bid");
   const uid = localStorage.getItem("@secure.n.uid");
   const decryptedUID = secureLocalStorage.getItem("uid");
-
   const [bookingsData, setBookingsData] = useState([]);
 
   useEffect(() => {
